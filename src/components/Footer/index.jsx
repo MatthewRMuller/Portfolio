@@ -22,9 +22,9 @@ export default function Footer() {
   const [sendStatus, setSendStatus] = useState({ processed: false, message: "", variant: "success" })
   const [hasAnimated, setHasAnimated] = useState(false)
   const [fieldValues, setFieldValues] = useState({
-    name: false,
-    email: false,
-    message: false,
+    name: "",
+    email: "",
+    message: "",
   })
 
   const handleComplete = () => {
@@ -32,7 +32,6 @@ export default function Footer() {
   }
 
   useEffect(() => {
-    // Start animation when the component is in view
     if (inView && !hasAnimated) {
       controls.start("visible")
     }
@@ -56,14 +55,14 @@ export default function Footer() {
       type: "text",
       id: "name",
       placeholder: "Enter name",
-      stateKey: "name",
+      statekey: "name",
     },
     {
       label: "Email",
       type: "email",
       id: "email",
       placeholder: "hello@mail.com",
-      stateKey: "email",
+      statekey: "email",
     },
     {
       label: "Message",
@@ -72,16 +71,23 @@ export default function Footer() {
       placeholder: "Your message",
       rows: "8",
       wrap: "soft",
-      stateKey: "message",
+      statekey: "message",
     },
   ]
 
-  const handleInputClick = (stateKey) => {
-    setFieldValues({
-      ...fieldValues,
-      [stateKey]: true,
-    })
-  }
+  const handleInputChange = (e, statekey) => {
+  setFieldValues({
+    ...fieldValues,
+    [statekey]: e.target.value // ✅ Stores actual input
+  })
+}
+
+const handleInputFocus = (statekey) => {
+  setFieldValues(prev => ({
+    ...prev,
+    [statekey]: prev[statekey] || "" // Initialize if undefined
+  }))
+}
 
   const timeoutAlert = () =>
     setTimeout(() => {
@@ -107,8 +113,6 @@ export default function Footer() {
     setIsSending(true)
     try {
       const { serviceId, templateid, publicKey } = emailjsconfig
-
-      console.log("trigger")
 
       const templateParams = {
         name: fieldValues.name,
@@ -144,7 +148,24 @@ export default function Footer() {
           {inputFields.map((field, index) => (
             <motion.div key={index} initial="hidden" animate={controls} variants={opacityVariant} transition={{ duration: 1, delay: 0.5 * (index + 1) }} className="input--div">
               <label htmlFor={field.id}>{field.label}</label>
-              {field.type === "textarea" ? <textarea name={field.id} id={field.id} placeholder={field.placeholder} rows={field.rows} wrap={field.wrap} onClick={() => handleInputClick(field.stateKey)}></textarea> : <input type={field.type} name={field.id} id={field.id} placeholder={field.placeholder} onClick={() => handleInputClick(field.stateKey)} />}
+              {field.type === "textarea" ? (
+      <textarea
+        id={field.id}
+        value={fieldValues[field.statekey] || ""}
+        onChange={(e) => handleInputChange(e, field.statekey)}
+        onFocus={() => handleInputFocus(field.statekey)}
+        {...field}
+      />
+    ) : (
+      <input
+        id={field.id}
+        type={field.type}
+        value={fieldValues[field.statekey] || ""}
+        onChange={(e) => handleInputChange(e, field.statekey)}
+        onFocus={() => handleInputFocus(field.statekey)}
+        {...field}
+      />
+    )}
               <motion.div
                 initial="hidden"
                 animate={controls}
@@ -159,7 +180,7 @@ export default function Footer() {
               >
                 <motion.div
                   initial="hidden"
-                  animate={fieldValues[field.stateKey] && "visible"}
+                  animate={fieldValues[field.statekey] && "visible"}
                   variants={inputFieldLineVariant}
                   transition={{
                     type: "spring",
